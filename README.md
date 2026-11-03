@@ -1,6 +1,6 @@
-# Duesly — Shared Bill Splitter
+# Shared Bill Splitter
 
-Duesly is an application for managing shared household bills.
+An application for managing shared household bills.
 
 People living in the same home can add members, create bills, split the amount between members, and track who has paid.
 
@@ -267,6 +267,6 @@ The final implementation and its behavior were reviewed and tested. I can explai
 ## Submission
 
 - **Repository:** https://github.com/Saxteja/shared-bill-splitter
-- **Demo video:** To be added
+- **Demo video:** https://www.youtube.com/watch?v=bLQojjjxlgs
 
 The video demonstrates the architecture, data flow, important edge cases, and the engineering decisions made during development.
