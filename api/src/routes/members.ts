@@ -29,11 +29,17 @@ memberRoutes.post('/:homeId/members', async (c) => {
     return c.json({ error: 'Valid member name is required' }, 400)
   }
 
-  const member = await createMember(c.env.DB, c.req.param('homeId'), input.name)
+  const result = await createMember(c.env.DB, c.req.param('homeId'), input.name)
 
-  if (!member) {
+  if (result.status === 'home_not_found') {
     return c.json({ error: 'Home not found' }, 404)
   }
+
+  if (result.status === 'name_conflict') {
+    return c.json({ error: 'A member with this name already exists in this household' }, 409)
+  }
+
+  const { member } = result
 
   return c.json(
     {

@@ -1,5 +1,5 @@
-import { createContext, useContext, useState } from 'react'
 import type { ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import type { Member } from '../../types'
 
 interface MemberContextValue {
@@ -10,8 +10,25 @@ interface MemberContextValue {
 
 const MemberContext = createContext<MemberContextValue | undefined>(undefined)
 
-export const MemberProvider = ({ members, children }: { members: Member[]; children: ReactNode }) => {
-  const [selectedMemberId, setSelectedMemberId] = useState<string>(members[0]?.id ?? '')
+export const MemberProvider = ({
+  members,
+  children,
+}: {
+  members: Member[]
+  children: ReactNode
+}) => {
+  const [selectedMemberId, setSelectedMemberId] = useState<string>(
+    members.find((member) => member.status === 'active')?.id ?? members[0]?.id ?? '',
+  )
+
+  useEffect(() => {
+    if (!members.some((member) => member.id === selectedMemberId)) {
+      setSelectedMemberId(
+        members.find((member) => member.status === 'active')?.id ?? members[0]?.id ?? '',
+      )
+    }
+  }, [members, selectedMemberId])
+
   return (
     <MemberContext.Provider value={{ selectedMemberId, setSelectedMemberId, members }}>
       {children}

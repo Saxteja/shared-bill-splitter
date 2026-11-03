@@ -4,18 +4,29 @@ import {
   findMembersByHomeId,
   findNextMemberNumber,
   insertMember,
+  memberNameExists,
 } from '../repositories/member.repository'
 import type { Member } from '../types/member.types'
+
+export type CreateMemberResult =
+  | { status: 'home_not_found' }
+  | { status: 'name_conflict' }
+  | { status: 'created'; member: Member }
 
 export async function createMember(
   db: Env['DB'],
   homeId: string,
   name: string,
-): Promise<Member | null> {
+): Promise<CreateMemberResult> {
   const home = await findHomeById(db, homeId)
 
   if (!home) {
-    return null
+    return { status: 'home_not_found' }
+  }
+
+  const normalizedName = name.trim()
+  if (await memberNameExists(db, homeId, normalizedName)) {
+    return { status: 'name_conflict' }
   }
 
   const id = crypto.randomUUID()
@@ -26,12 +37,20 @@ export async function createMember(
     homeId,
     membershipCode: `MEM-${id.slice(0, 8).toUpperCase()}`,
     memberNumber,
-    name,
+    name: normalizedName,
   }
 
-  await insertMember(db, member)
+  try {
+    await insertMember(db, member)
+  } catch (error) {
+    // Another request may have inserted the same normalized name after the precheck.
+    if (await memberNameExists(db, homeId, normalizedName)) {
+      return { status: 'name_conflict' }
+    }
+    throw error
+  }
 
-  return member
+  return { status: 'created', member }
 }
 
 export async function removeMemberFromHome(

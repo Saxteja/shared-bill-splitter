@@ -45,7 +45,11 @@ export interface CreateHomeResponse extends Home {}
 export interface AddMemberRequest {
   name: string
 }
-export interface AddMemberResponse extends Member {}
+export interface AddMemberResponse {
+  id: string
+  homeId: string
+  name: string
+}
 
 export interface CreateBillRequest {
   title: string

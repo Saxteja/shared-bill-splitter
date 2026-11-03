@@ -1,5 +1,4 @@
 // src/components/layout/SummaryStrip.tsx
-import React from 'react'
 import { formatCents } from '../../utils/format'
 
 /** Component showing total, outstanding and settled amounts */

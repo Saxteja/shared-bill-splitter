@@ -1,23 +1,24 @@
-// src/routes/split.tsx
 import { createFileRoute } from '@tanstack/react-router'
+import { useState } from 'react'
+import BillList from '../components/bills/BillList'
+import EmptyState from '../components/common/EmptyState'
+import ErrorState from '../components/common/ErrorState'
+import LoadingState from '../components/common/LoadingState'
 import Header from '../components/layout/Header'
 import SummaryStrip from '../components/layout/SummaryStrip'
-import BillList from '../components/bills/BillList'
+import AddMemberDialog from '../components/members/AddMemberDialog'
+import { MemberProvider } from '../components/members/MemberContext'
 import ShareBreakdown from '../components/shares/ShareBreakdown'
-import LoadingState from '../components/common/LoadingState'
-import ErrorState from '../components/common/ErrorState'
-import EmptyState from '../components/common/EmptyState'
-import '../routes/split.css'
+import type { HomeData } from '../hooks/useHomeData'
 import { useHomeData } from '../hooks/useHomeData'
-import { totalBills, outstanding, settled } from '../utils/bill-calculations'
-import { useState } from 'react'
+import { outstanding, settled, totalBills } from '../utils/bill-calculations'
+import './split.css'
 
-/** Simple validator for the required homeId query param */
 function validateSearch(search: Record<string, unknown>) {
-  const homeId = typeof search.homeId === 'string' && search.homeId.trim() !== '' ? search.homeId : undefined
-  if (!homeId) {
-    throw new Error('homeId query parameter is required')
-  }
+  const homeId =
+    typeof search.homeId === 'string' && search.homeId.trim() !== ''
+      ? search.homeId.trim()
+      : undefined
   return { homeId }
 }
 
@@ -29,68 +30,93 @@ export const Route = createFileRoute('/split')({
 function SplitPage() {
   const { homeId } = Route.useSearch()
   const { data, isLoading, error, reload } = useHomeData(homeId)
-  const [selectedBillId, setSelectedBillId] = useState<string | null>(null)
-  const [selectedMemberId, setSelectedMemberId] = useState<string>('')
-
-  // When data loads, initialise selected member to first active member
-  React.useEffect(() => {
-    if (data?.members?.length && !selectedMemberId) {
-      const first = data.members.find((m) => m.status === 'active')
-      if (first) setSelectedMemberId(first.id)
-    }
-  }, [data, selectedMemberId])
-
-  // When no bill is selected, default to first one if available
-  const selectedBill = data?.bills?.find((b) => b.id === selectedBillId) ?? data?.bills?.[0] ?? null
-
-  // Summary values (fallback to 0 when data missing)
-  const total = data ? totalBills(data.bills) : 0
-  const out = data ? outstanding(data.balances) : 0
-  const setl = data ? settled(data.bills, data.balances) : 0
-
-  const { homeId } = Route.useSearch()
-  const { data, isLoading, error, reload } = useHomeData(homeId)
-  const [selectedBillId, setSelectedBillId] = useState<string | null>(null)
-
-  // When no bill is selected, default to first one if available
-  const selectedBill = data?.bills?.find((b) => b.id === selectedBillId) ?? data?.bills?.[0] ?? null
-
-  // Summary values (fallback to 0 when data missing)
-  const total = data ? totalBills(data.bills) : 0
-  const out = data ? outstanding(data.balances) : 0
-  const setl = data ? settled(data.bills, data.balances) : 0
 
   if (!homeId) {
     return <EmptyState message="Add ?homeId=... to the URL to view a household." />
   }
-  if (isLoading) return <LoadingState />
-  if (error) return <ErrorState message={error} onRetry={reload} />
-  if (!data) return <EmptyState message="No data available for this household." />
 
   return (
-    <main className="app-shell">
-      <Header homeName="Shared household" />
-      <section className="page-content">
-        <div className="page-heading">
-          <h1>Shared expenses</h1>
-          <p>{data.members.length} members</p>
-        </div>
-        <SummaryStrip total={total} outstanding={out} settled={setl} />
-        <section className="dashboard-layout">
-          <div className="bills-section">
-            <BillList
-              bills={data.bills}
-              selectedBillId={selectedBill?.id ?? ''}
-              onSelect={setSelectedBillId}
+    <main className="app-shell split-app">
+      <MemberProvider key={homeId} members={data?.members ?? []}>
+        <Header homeId={homeId} />
+        <section className="page-content">
+          {!data && isLoading && <LoadingState />}
+          {!data && error && <ErrorState message={error} onRetry={reload} />}
+          {!data && !isLoading && !error && (
+            <EmptyState message="No data available for this household." />
+          )}
+          {data && (
+            <HomeWorkspace
+              key={homeId}
+              homeId={homeId}
+              data={data}
+              isLoading={isLoading}
+              error={error}
+              reload={reload}
             />
-          </div>
-          <div className="shares-section">
-            {selectedBill && (
-              <ShareBreakdown bill={selectedBill} members={data.members} onPaymentSuccess={reload} />
-            )}
-          </div>
+          )}
         </section>
-      </section>
+      </MemberProvider>
     </main>
+  )
+}
+
+function HomeWorkspace({
+  homeId,
+  data,
+  isLoading,
+  error,
+  reload,
+}: {
+  homeId: string
+  data: HomeData
+  isLoading: boolean
+  error: string | null
+  reload: () => Promise<HomeData | null>
+}) {
+  const [selectedBillId, setSelectedBillId] = useState<string | null>(null)
+  const selectedBill =
+    data.bills.find((bill) => bill.id === selectedBillId) ?? data.bills[0] ?? null
+  const activeMemberCount = data.members.filter((member) => member.status === 'active').length
+  const total = totalBills(data.bills)
+  const out = outstanding(data.balances)
+  const setl = settled(data.bills, data.balances)
+
+  return (
+    <>
+      {(isLoading || error) && (
+        <div className="refresh-state" aria-live="polite">
+          {isLoading && <LoadingState />}
+          {error && <ErrorState message={error} onRetry={reload} />}
+        </div>
+      )}
+      <div className="page-heading">
+        <h1>Shared expenses</h1>
+        <div className="page-heading-meta">
+          <p>{data.members.length} members</p>
+          <AddMemberDialog homeId={homeId} onRefresh={reload} />
+        </div>
+      </div>
+      <SummaryStrip total={total} outstanding={out} settled={setl} />
+      <section className="dashboard-layout">
+        <div className="bills-section">
+          <BillList
+            bills={data.bills}
+            selectedBillId={selectedBill?.id ?? ''}
+            onSelect={setSelectedBillId}
+            homeId={homeId}
+            onRefresh={reload}
+            hasActiveMembers={activeMemberCount > 0}
+          />
+        </div>
+        <div className="shares-section">
+          {selectedBill ? (
+            <ShareBreakdown bill={selectedBill} members={data.members} onPaymentSuccess={reload} />
+          ) : (
+            <EmptyState message="Add a bill to see its member shares." />
+          )}
+        </div>
+      </section>
+    </>
   )
 }

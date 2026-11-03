@@ -1,0 +1,591 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap");
+
+.split-app {
+  --ink: #171717;
+  --muted: #5b5a54;
+  --paper: #f8f7f2;
+  --surface: #f1efe8;
+  --line: #aaa79c;
+  --accent: #d6d34e;
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "DM Sans", sans-serif;
+}
+
+.split-app *,
+.split-app *::before,
+.split-app *::after {
+  box-sizing: border-box;
+}
+
+.split-app button,
+.split-app input,
+.split-app select {
+  font: inherit;
+}
+
+.split-app .topbar {
+  min-height: 82px;
+  padding: 12px 4%;
+  border-bottom: 1px solid var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.split-app .brand {
+  color: inherit;
+  text-decoration: none;
+  font:
+    800 26px / 1.1 "Playfair Display",
+    Georgia,
+    serif;
+  letter-spacing: -1px;
+}
+
+.split-app .header-actions,
+.split-app .member-selector {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.split-app .home-selector-label {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.split-app .home-selector {
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.split-app .household-selector-message {
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + 6px);
+  left: 0;
+  width: max-content;
+  max-width: min(320px, 75vw);
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.split-app .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+.split-app .member-selector select {
+  max-width: min(220px, 36vw);
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.split-app .member-avatar {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: #e7e4d9;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.split-app .page-content {
+  width: min(1500px, 100%);
+  margin: 0 auto;
+  padding: 36px 4% 64px;
+}
+
+.split-app .page-heading h1,
+.split-app .section-title-group h2,
+.split-app .selected-bill-heading h2,
+.split-app .shares-heading h3,
+.split-app .bill-information h3,
+.split-app .summary-item strong,
+.split-app .modal h2 {
+  font-family: "Playfair Display", Georgia, serif;
+}
+
+.split-app .page-heading h1 {
+  margin: 0;
+  font-size: clamp(42px, 5vw, 66px);
+  line-height: 1.12;
+  letter-spacing: -2px;
+}
+
+.split-app .page-heading p {
+  margin: 8px 0 26px;
+  color: var(--muted);
+}
+.split-app .page-heading-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.split-app .page-heading-meta > p {
+  margin: 8px 0 26px;
+}
+
+.split-app .summary-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 38px;
+  padding: 18px 0;
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+}
+
+.split-app .summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 20px;
+}
+
+.split-app .summary-item:first-child {
+  padding-left: 0;
+}
+.split-app .summary-item + .summary-item {
+  border-left: 1px solid var(--line);
+}
+.split-app .summary-label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+}
+.split-app .summary-item strong {
+  font-size: clamp(24px, 3vw, 36px);
+}
+
+.split-app .dashboard-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(340px, 1fr);
+  align-items: start;
+  gap: 32px;
+}
+
+.split-app .bills-section,
+.split-app .shares-section {
+  min-width: 0;
+}
+.split-app .shares-section {
+  padding: 8px 0 8px 28px;
+  border-left: 1px solid var(--line);
+}
+.split-app .section-heading,
+.split-app .section-title-group {
+  display: flex;
+  align-items: center;
+}
+.split-app .section-heading {
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.split-app .section-title-group {
+  gap: 14px;
+}
+.split-app .section-title-group h2 {
+  margin: 0;
+  font-size: 34px;
+}
+.split-app .item-count {
+  color: var(--muted);
+  font-size: 14px;
+}
+.split-app .primary-button,
+.split-app .secondary-button {
+  min-height: 42px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 4px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.split-app .primary-button {
+  background: var(--accent);
+  color: var(--ink);
+}
+.split-app .primary-button:hover:not(:disabled) {
+  background: #cbc744;
+}
+.split-app .primary-button:disabled,
+.split-app .secondary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.split-app .secondary-button {
+  background: #e9e6dd;
+  color: var(--ink);
+}
+.split-app button:focus-visible,
+.split-app a:focus-visible,
+.split-app select:focus-visible,
+.split-app input:focus-visible {
+  outline: 3px solid #8b8700;
+  outline-offset: 2px;
+}
+.split-app .add-bill-button {
+  white-space: nowrap;
+}
+.split-app .bill-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.split-app .bill-card {
+  width: 100%;
+  min-height: 96px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.split-app .bill-card:hover {
+  border-color: var(--ink);
+  background: #f5f2e9;
+}
+.split-app .bill-card.selected {
+  border: 2px solid var(--ink);
+  background: #f2f0df;
+}
+.split-app .bill-information {
+  min-width: 0;
+}
+.split-app .bill-information h3 {
+  overflow-wrap: anywhere;
+  margin: 0;
+  font-size: 23px;
+}
+.split-app .bill-amount {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  white-space: nowrap;
+}
+.split-app .bill-amount strong {
+  font:
+    700 21px "Playfair Display",
+    Georgia,
+    serif;
+}
+.split-app .bill-amount span,
+.split-app .view-shares {
+  color: var(--muted);
+  font-size: 13px;
+}
+.split-app .progress-badge {
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: #f2ecd2;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.split-app .progress-badge.all-paid {
+  background: #e4e9ce;
+}
+.split-app .progress-badge.none-paid {
+  background: #f2ecd2;
+}
+.split-app .empty-list-state,
+.split-app .notice-state,
+.split-app .empty-state,
+.split-app .error-state,
+.split-app .loading-state {
+  padding: 22px;
+  border-radius: 5px;
+  background: var(--surface);
+  text-align: center;
+}
+.split-app .notice-state {
+  margin: 0 0 14px;
+  background: #f3ecd8;
+}
+.split-app .error-state {
+  color: #7a211b;
+}
+.split-app .error-state button {
+  margin-top: 10px;
+}
+.split-app .selected-bill-heading {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.split-app .selected-bill-heading h2 {
+  margin: 0 0 4px;
+  font-size: 32px;
+  overflow-wrap: anywhere;
+}
+.split-app .selected-bill-heading p {
+  margin: 0;
+  color: var(--muted);
+}
+.split-app .shares-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 0 8px;
+}
+.split-app .shares-heading h3 {
+  margin: 0;
+  font-size: 22px;
+}
+.split-app .shares-heading > span {
+  color: var(--muted);
+  font-size: 13px;
+}
+.split-app .share-list {
+  display: flex;
+  flex-direction: column;
+}
+.split-app .share-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 58px;
+  border-bottom: 1px solid #d2cfc5;
+}
+.split-app .share-row > div:nth-child(2) {
+  overflow-wrap: anywhere;
+}
+.split-app .share-row .member-avatar {
+  width: 36px;
+  height: 36px;
+  font-size: 12px;
+}
+.split-app .paid-status,
+.split-app .unpaid-status {
+  padding: 5px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.split-app .paid-status {
+  background: #e4e9ce;
+}
+.split-app .unpaid-status {
+  background: #f2ecd2;
+}
+.split-app .modal-overlay {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgb(23 23 23 / 56%);
+}
+.split-app .modal {
+  width: min(460px, 100%);
+  padding: 26px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--paper);
+  box-shadow: 0 18px 60px rgb(0 0 0 / 20%);
+}
+.split-app .modal h2 {
+  margin: 0 0 12px;
+  font-size: 30px;
+}
+.split-app .modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.split-app .modal label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+}
+.split-app .modal input {
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--ink);
+}
+.split-app .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+.split-app .form-error {
+  padding: 10px;
+  border-left: 3px solid #a43d34;
+  background: #f6e9e5;
+  color: #75251e;
+}
+
+@media (max-width: 900px) {
+  .split-app .dashboard-layout {
+    grid-template-columns: 1fr;
+  }
+  .split-app .shares-section {
+    padding: 24px 0 0;
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .split-app .topbar {
+    min-height: 68px;
+    padding-inline: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .split-app .brand {
+    font-size: 19px;
+  }
+  .split-app .header-actions {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .split-app .home-selector-label {
+    min-width: 0;
+    max-width: 54vw;
+  }
+  .split-app .home-selector {
+    width: 100%;
+    min-width: 0;
+    padding: 8px;
+    font-size: 13px;
+  }
+  .split-app .member-selector {
+    gap: 7px;
+  }
+  .split-app .member-selector select {
+    max-width: 35vw;
+    padding: 8px 5px;
+    font-size: 12px;
+  }
+  .split-app .member-selector .member-avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 12px;
+  }
+  .split-app .page-content {
+    padding: 28px 16px 44px;
+  }
+  .split-app .page-heading h1 {
+    font-size: 42px;
+  }
+  .split-app .page-heading-meta {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .split-app .page-heading-meta > p {
+    margin-bottom: 18px;
+  }
+  .split-app .summary-strip {
+    margin-bottom: 25px;
+  }
+  .split-app .summary-item {
+    padding-inline: 9px;
+  }
+  .split-app .summary-label {
+    font-size: 9px;
+  }
+  .split-app .section-heading {
+    align-items: flex-start;
+  }
+  .split-app .section-title-group {
+    gap: 8px;
+  }
+  .split-app .section-title-group h2 {
+    font-size: 28px;
+  }
+  .split-app .add-bill-button {
+    padding: 9px 10px;
+    font-size: 13px;
+  }
+  .split-app .bill-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 13px;
+  }
+  .split-app .bill-amount {
+    align-items: flex-end;
+  }
+  .split-app .progress-badge {
+    justify-self: start;
+  }
+  .split-app .view-shares {
+    justify-self: end;
+  }
+  .split-app .share-row {
+    grid-template-columns: 34px minmax(0, 1fr) auto auto;
+    gap: 6px;
+  }
+  .split-app .share-row .member-avatar {
+    width: 30px;
+    height: 30px;
+  }
+  .split-app .share-row .primary-button {
+    grid-column: 2 / -1;
+    justify-self: end;
+    min-height: 34px;
+    padding: 6px 11px;
+  }
+  .split-app .share-row > div:nth-child(2),
+  .split-app .share-row > div:nth-child(3) {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .split-app .brand {
+    font-size: 16px;
+  }
+  .split-app .home-selector-label {
+    max-width: 50vw;
+  }
+  .split-app .summary-item strong {
+    font-size: 19px;
+  }
+  .split-app .share-row {
+    grid-template-columns: 30px minmax(0, 1fr) auto;
+  }
+  .split-app .share-row .paid-status,
+  .split-app .share-row .unpaid-status {
+    grid-column: 2;
+    justify-self: start;
+  }
+}

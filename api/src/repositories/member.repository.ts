@@ -1,5 +1,24 @@
 import type { Member } from '../types/member.types'
 
+export async function memberNameExists(
+  db: Env['DB'],
+  homeId: string,
+  name: string,
+): Promise<boolean> {
+  const existing = await db
+    .prepare(`
+      SELECT id
+      FROM members
+      WHERE home_id = ?
+        AND lower(trim(name)) = lower(trim(?))
+      LIMIT 1
+    `)
+    .bind(homeId, name)
+    .first<{ id: string }>()
+
+  return existing !== null
+}
+
 export async function insertMember(db: Env['DB'], member: Member): Promise<void> {
   await db
     .prepare(`

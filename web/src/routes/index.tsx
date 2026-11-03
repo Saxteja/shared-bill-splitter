@@ -87,7 +87,17 @@ function Home() {
   const [bills, setBills] = useState(initialBills)
 
   const selectedBill = bills.find((bill) => bill.id === selectedBillId) ?? bills[0]
-  const currentMemberDetails = members.find((member) => member.id === currentMember)!
+  const currentMemberDetails = members.find((member) => member.id === currentMember)
+
+  if (!selectedBill || !currentMemberDetails) {
+    return (
+      <main className="app-shell">
+        <section className="page-content">
+          <p>No prototype data is available.</p>
+        </section>
+      </main>
+    )
+  }
 
   const totalBills = bills.reduce((sum, bill) => sum + bill.total, 0)
   const outstanding = bills.reduce(
@@ -103,13 +113,14 @@ function Home() {
   const paidCount = selectedBill.shares.filter((share) => share.paid).length
   const currentShare = selectedBill.shares.find((share) => share.memberId === currentMember)
   const currentMemberHasUnpaidShare = currentShare && !currentShare.paid
+  const selectedBillIdForPayment = selectedBill.id
 
   function payCurrentShare() {
     if (!currentShare || currentShare.paid) return
 
     setBills((previousBills) =>
       previousBills.map((bill) =>
-        bill.id === selectedBill.id
+        bill.id === selectedBillIdForPayment
           ? {
               ...bill,
               shares: bill.shares.map((share) =>
@@ -251,14 +262,14 @@ function Home() {
 
             <div className="share-list">
               {selectedBill.shares.map((share) => {
-                const member = members.find((item) => item.id === share.memberId)!
+                const member = members.find((item) => item.id === share.memberId)
 
                 return (
                   <div className="share-row" key={share.id}>
-                    <span className="share-avatar">{member.initials}</span>
+                    <span className="share-avatar">{member?.initials ?? '??'}</span>
                     <strong className="share-member-name">
-                      {member.name}
-                      {member.id === currentMember ? ' (You)' : ''}
+                      {member?.name ?? 'Unknown member'}
+                      {member?.id === currentMember ? ' (You)' : ''}
                     </strong>
                     <span className="share-amount">{formatMoney(share.amount)}</span>
                     <span className={`payment-status ${share.paid ? 'paid' : 'unpaid'}`}>

@@ -23,3 +23,15 @@ export async function findHomeById(
     .bind(homeId)
     .first<{ id: string; name: string }>()
 }
+
+export async function findAllHomes(db: Env['DB']): Promise<{ id: string; name: string }[]> {
+  const result = await db
+    .prepare(`
+      SELECT id, name
+      FROM homes
+      ORDER BY created_at ASC, id ASC
+    `)
+    .all<{ id: string; name: string }>()
+
+  return result.results
+}

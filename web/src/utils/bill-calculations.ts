@@ -3,7 +3,7 @@
  * Pure financial calculation helpers used by the UI.
  * All functions operate on raw API data (cents) and return numbers in cents.
  */
-import type { Bill, Balance } from '../types'
+import type { Balance, Bill } from '../types'
 
 /** Sum of all bill totalCents */
 export const totalBills = (bills: Bill[]): number => {

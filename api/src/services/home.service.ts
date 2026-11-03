@@ -1,4 +1,4 @@
-import { insertHome } from '../repositories/home.repository'
+import { findAllHomes, insertHome } from '../repositories/home.repository'
 import type { Home } from '../types/home.types'
 
 export async function createHome(db: Env['DB'], name: string): Promise<Home> {
@@ -13,4 +13,8 @@ export async function createHome(db: Env['DB'], name: string): Promise<Home> {
   await insertHome(db, home)
 
   return home
+}
+
+export async function listHomes(db: Env['DB']): Promise<{ id: string; name: string }[]> {
+  return findAllHomes(db)
 }

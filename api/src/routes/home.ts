@@ -1,8 +1,13 @@
 import { Hono } from 'hono'
-import { createHome } from '../services/home.service'
+import { createHome, listHomes } from '../services/home.service'
 import { validateCreateHome } from '../validators/home.validator'
 
 const homeRoutes = new Hono<{ Bindings: Env }>()
+
+homeRoutes.get('/', async (c) => {
+  const homes = await listHomes(c.env.DB)
+  return c.json({ homes })
+})
 
 homeRoutes.post('/', async (c) => {
   let body: unknown
