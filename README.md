@@ -1,157 +1,276 @@
-# SDE Intern Assignment: Shared Bill Splitter
+# Duesly — Shared Bill Splitter
 
-Welcome. In this assignment you build a small bill splitter for a shared home. It has two parts:
+Duesly is an application for managing shared household bills.
 
-1. **Homes and members:** create a home and add members to it.
-2. **Bill splitting:** split a bill between the members. Each member pays their own share.
+People living in the same home can add members, create bills, split the amount between members, and track who has paid.
 
-The assignment is small on purpose. We want correct, safe, and clear code. We do not want many features.
+The goal is simple: split bills correctly and make it clear how much each member still owes.
 
-## What we look at
+## What it does
 
-- **Your code passes the tests.** The tests decide, not opinion. You get the visible tests. We also run extra tests that you do not see.
-- **Your code is safe when things go wrong.** Wrong input, repeated requests, and two requests at the same time must not break your data.
-- **Your code is typed.** Use TypeScript. Do not use `any`.
-- **You understand your code.** You record a short video and explain it.
+- **Homes:** Create and switch between different households.
+- **Members:** Add members to a household and manage their membership.
+- **Bills:** Create a bill and automatically split it between active members.
+- **Payments:** Mark individual shares as paid.
+- **Balances:** See how much each member still owes across all bills.
+- **History:** Keep previous bills and payment records when a member leaves a household.
 
-Take your time. A careful, correct solution is better than a fast one. We expect 2 to 3 days of real work.
-
-## Stack (required)
+## Stack
 
 - **API:** Hono on Cloudflare Workers
-- **Database:** Cloudflare D1 (SQLite). The binding is `DB` in `api/wrangler.jsonc`.
+- **Database:** Cloudflare D1 (SQLite)
 - **Web:** React, Vite, TanStack Router
 - **Language:** TypeScript on both sides
-- **Tests:** Vitest, running inside the Workers runtime
-- **Quality:** Biome. `pnpm check` and `pnpm typecheck` must pass.
+- **Tests:** Vitest running inside the Workers runtime
+- **Quality:** Biome
 
-You choose the rest (styling, form library, validation library). Pick tools you can explain.
+## How it works
 
-## The task
+The application has three main backend layers.
 
-The assignment has two parts. Do Part 1 first. Part 2 builds on it.
+- **Routes:** Receive HTTP requests, validate input, and return responses.
+- **Services:** Handle the application rules, such as splitting bills and recording payments.
+- **Repositories:** Read and write data in the database.
 
-**Database.** Write the schema as SQL migration files in `api/migrations/`. For example `0001_init.sql`. The tests apply every file in this folder. Your schema must have **at least 3 named constraints** that protect the data. For example a foreign key, a `CHECK`, or a `UNIQUE` key. Be ready to explain what each constraint stops.
+The frontend communicates with the API using HTTP requests.
 
-**Errors.** Every error response is JSON: `{ "error": "message" }`.
+### Architecture
 
-## Part 1: Homes and members
+```mermaid
+flowchart TD
+    A[User] --> B[React Frontend]
+    B --> C[Hono API]
+    C --> D[Route Layer]
+    D --> E[Service Layer]
+    E --> F[Repository Layer]
+    F --> G[(Cloudflare D1)]
+```
 
-Create a home and add members to it. The order in which members are added matters in Part 2.
+### Data flow
 
-#### `POST /api/homes`
+When a user creates a bill:
 
-- Request: `{ "name": string }`
-- Success: `201` `{ id, name }`
+1. The frontend sends the bill title and total amount to the API.
+2. The API checks that the household exists and has active members.
+3. The service calculates each member's share.
+4. The repository stores the bill and its shares in D1.
+5. The API returns the created bill and shares.
+6. The frontend refreshes the household data.
 
-#### `POST /api/homes/:homeId/members`
+When a member pays a share, the API records the payment and updates the share's payment status.
 
-- Request: `{ "name": string }`
-- Success: `201` `{ id, homeId, name }`
-- Errors: `404` home not found
+## Important rules
 
-Visible tests: `api/test/homes.test.ts`.
+### 1. Money calculations
 
-## Part 2: Bill splitting
+All amounts are stored as integer cents. The application does not use floating-point numbers for money calculations.
 
-Add a bill to a home, split it between the members, and let each member pay their share.
+For example, splitting 1,000 cents between three members gives:
 
-All amounts are whole **cents** (integers). `100` cents is 1 dollar. Never use decimals for money.
+| Member | Share |
+|---|---:|
+| Member 1 | 334 cents |
+| Member 2 | 333 cents |
+| Member 3 | 333 cents |
+| **Total** | **1,000 cents** |
 
-#### `POST /api/homes/:homeId/bills`
+The extra cents go to the members in the order they were added.
 
-- Request: `{ "title": string, "totalCents": number }`
-- Success: `201` `{ id, homeId, title, totalCents, shares: [{ id, memberId, amountCents, paidAt: null }] }`
-- Errors: `404` home not found. `422` total is not a positive whole number, or the home has no members.
+Zero-cent shares are also supported when a small bill is split between many members.
 
-#### `POST /api/bills/:billId/shares/:shareId/pay`
+### 2. Payments
 
-- Request: header `Idempotency-Key`
-- Success: `200` `{ id, memberId, amountCents, paidAt }`
-- Errors: `400` key missing. `404` bill or share not found. `409` share already paid with a different key.
+Every payment request requires an `Idempotency-Key`.
 
-#### `GET /api/homes/:homeId/balances`
+- Sending the same key again for the same share returns the original payment result.
+- Sending a different key for an already-paid share returns a conflict.
+- Database constraints protect against duplicate payment records.
+- Concurrent requests cannot successfully pay the same share twice.
 
-- Success: `200` `{ balances: [{ memberId, name, outstandingCents }] }`
-- Errors: `404` home not found
+If a request fails or its outcome is uncertain, the frontend refreshes the household data before showing the payment as complete.
 
-**Rules**
+This application records payments. It does not connect to an external payment gateway.
 
-- **Split.** A bill is split between all members of the home. The shares always add up to `totalCents`. If the amount does not divide evenly, the extra cents go to the members one by one, in the order the members were added to the home. Example: 1000 cents between 3 members gives `334`, `333`, `333`.
-- **Pay.** Paying marks one share as paid and sets `paidAt`. If the same `Idempotency-Key` is sent again for the same share, answer `200` with the same result. Do not pay twice. If two requests pay the same share at the same time, only one may succeed.
-- **Balances.** `outstandingCents` is the sum of the member's unpaid shares, across all bills of the home. List the members in the order they were added.
+### 3. Member history
 
-Visible tests: `api/test/bills.test.ts` and `api/test/payments.test.ts`.
+A member can leave a household.
 
-#### Web page
+Departed members are not included in new bill splits, but their previous bills, shares, and payments remain available.
 
-Build one page that:
+Member order is preserved and is used when distributing remainder cents.
 
-- shows the bills of a home and the shares of each bill,
-- lets a member pay a share,
-- shows clear **loading**, **empty**, and **error** states,
-- keeps the share unpaid and shows an error if the payment fails.
+### 4. Database constraints
 
-The page must not crash when the API answers with an error or is slow.
+The database uses foreign keys, unique constraints, and check constraints to protect its data.
 
-## Cases you must handle
+Some examples are:
 
-You must handle these cases and talk about them in your video:
+- A share must belong to an existing bill and member in the same household.
+- A member number cannot be reused within a household.
+- A payment can only be recorded once for a share.
+- Payment amounts must match their corresponding share amounts.
+- Member names must be unique within a household, ignoring case and surrounding whitespace.
 
-1. A home with no members.
-2. An amount that is zero, negative, or not a whole number.
-3. An amount that does not divide evenly.
-4. The same payment request sent twice.
-5. Two members paying the same share at the same time.
-6. A bill or share that does not exist.
-7. The API answers with a 500 error or is slow. The web page must not crash.
+## API endpoints
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/api/homes` | List households |
+| POST | `/api/homes` | Create a household |
+| POST | `/api/homes/:homeId/members` | Add a member |
+| POST | `/api/homes/:homeId/bills` | Create and split a bill |
+| POST | `/api/bills/:billId/shares/:shareId/pay` | Pay a share |
+| GET | `/api/homes/:homeId/balances` | Get household balances |
+
+All error responses use JSON:
+
+```json
+{
+  "error": "Error message"
+}
+```
+
+## Project structure
+
+```text
+.
+├── api/
+│   ├── migrations/
+│   ├── src/
+│   │   ├── middleware/
+│   │   ├── repositories/
+│   │   ├── routes/
+│   │   ├── services/
+│   │   ├── types/
+│   │   ├── utils/
+│   │   └── validators/
+│   └── test/
+│
+├── web/
+│   └── src/
+│       ├── api/
+│       ├── components/
+│       ├── hooks/
+│       ├── routes/
+│       ├── types/
+│       └── utils/
+│
+└── package.json
+```
 
 ## Run it
 
-This is a pnpm workspace. Install once at the root.
+This is a pnpm workspace. Install dependencies from the project root.
+
+### Requirements
+
+- Node.js
+- Corepack
+- pnpm through Corepack
+
+### Installation
 
 ```bash
-pnpm install
-pnpm dev          # api on :8787 and web on :5173
+git clone https://github.com/Saxteja/shared-bill-splitter.git
+cd shared-bill-splitter
+corepack pnpm install
 ```
 
-Open http://localhost:5173. The starter page shows a title. `/api/health` returns `{ "status": "ok" }`.
+### Start the application
 
 ```bash
-pnpm test         # run the visible tests in api/test
-pnpm check        # Biome: format and lint. Must pass.
-pnpm check:fix    # fix what Biome can fix
-pnpm typecheck    # tsc on both packages. Must pass.
-pnpm build        # production build of the web app
+corepack pnpm dev
 ```
 
-`pnpm dev` applies your migrations to a local database before it starts the API.
+This starts:
 
-If pnpm says some build scripts were ignored, run `pnpm approve-builds` and allow `esbuild` and `workerd`.
+- API on `http://127.0.0.1:8787`
+- Web application on `http://localhost:5173`
 
-When you change `api/wrangler.jsonc`, refresh the `Env` types:
+The API applies local database migrations before starting.
+
+Open the web application and select a household. The Split Ledger page uses a household ID in the URL:
+
+```text
+http://localhost:5173/split?homeId=<HOUSEHOLD_ID>
+```
+
+### Other commands
 
 ```bash
-pnpm --filter bill-splitter-api cf-typegen
+corepack pnpm test
+corepack pnpm check
+corepack pnpm typecheck
+corepack pnpm build
 ```
 
-## Rules for the tests
+- `test` runs the API tests.
+- `check` runs Biome checks.
+- `typecheck` checks TypeScript in the workspace.
+- `build` creates the production frontend build.
 
-- The visible tests are in `api/test`. They start with a failing result. Your job is to make them pass.
-- Do **not** change the visible tests or `api/test/helpers.ts`. We compare them with the original.
-- We run extra tests after you submit. They test the cases in "Cases you must handle" more closely.
+## Cases handled
 
-## AI policy
+The application handles:
 
-You can use AI tools. Tell us which ones and where in your answers on the form.
-You must understand every line you submit. We check this with your video and in a live call. "The AI wrote it" is not an answer.
+1. A household with no members.
+2. Zero, negative, and invalid bill amounts.
+3. Bill amounts that do not divide evenly.
+4. The same payment request sent more than once.
+5. Two requests attempting to pay the same share.
+6. A bill, share, or household that does not exist.
+7. API errors and slow responses.
+8. Members leaving a household while keeping their history.
+9. Duplicate member names within the same household.
+10. Failed or uncertain payment requests.
 
-## How to submit
+## Tests
 
-1. Click **Use this template**, then **Create a new repository**. Make the repository **public**.
-2. Build your solution in your new repository. Small, clear commits are welcome.
-3. Update this README with a short section called **Decisions**. Write 3 decisions you made and why.
-4. Record a video of **3 minutes or less** (Loom or unlisted YouTube). Show the architecture, the data flow, and one trade-off you made. Make sure anyone with the link can view it.
-5. Paste the repository link and the video link in the application form.
+The API tests cover household creation, member management, bill splitting, payments, balances, and error handling.
 
-We will run `pnpm install && pnpm check && pnpm typecheck && pnpm test` on your repository.
+Additional tests cover:
+
+- Uneven and zero-cent splits.
+- Payment retries and idempotency.
+- Concurrent payment requests.
+- Household data isolation.
+- Departed member history.
+- Duplicate member names.
+- Invalid requests and database rollback.
+
+The frontend was also checked manually for household switching, bill creation, payments, persistence, loading states, API failures, and slow network responses.
+
+## Decisions
+
+### 1. Use integer cents for money
+
+I chose integer cents instead of floating-point numbers because financial calculations should not depend on floating-point precision.
+
+This also makes it easier to distribute remainder cents without losing or creating money.
+
+### 2. Use idempotency keys for payments
+
+A request can fail because of a network problem even when the server has already processed it.
+
+I used idempotency keys so that retrying the same payment does not create another payment record.
+
+Database constraints provide another layer of protection against duplicate payments.
+
+### 3. Separate routes, services, and repositories
+
+I separated HTTP handling, business logic, and database operations.
+
+This keeps route handlers small and makes individual parts easier to test and maintain.
+
+## AI tools
+
+AI tools were used during development for implementation assistance, debugging, code review, and documentation.
+
+The final implementation and its behavior were reviewed and tested. I can explain the architecture, business rules, and technical decisions made in this project.
+
+## Submission
+
+- **Repository:** https://github.com/Saxteja/shared-bill-splitter
+- **Demo video:** To be added
+
+The video demonstrates the architecture, data flow, important edge cases, and the engineering decisions made during development.
