@@ -10,7 +10,7 @@ The goal is simple: split bills correctly and make it clear how much each member
 
 - **Homes:** Create and switch between different households.
 - **Members:** Add members to a household and manage their membership.
-- **Bills:** Create a bill and automatically split it between active members.
+- **Bills:** Create a bill and automatically split the amount between active members.
 - **Payments:** Mark individual shares as paid.
 - **Balances:** See how much each member still owes across all bills.
 - **History:** Keep previous bills and payment records when a member leaves a household.
@@ -101,15 +101,15 @@ Member order is preserved and is used when distributing remainder cents.
 
 ### 4. Database constraints
 
-The database uses foreign keys, unique constraints, and check constraints to protect its data.
+The migrations define named database constraints to protect data integrity. Three examples are:
 
-Some examples are:
+- **`chk_shares_amount_nonnegative` — CHECK:** Prevents a share amount from being negative.
+- **`fk_shares_bill_home` — FOREIGN KEY:** Ensures a share references a bill and household combination that exists.
+- **`uq_payments_idempotency` — UNIQUE:** Prevents the same idempotency key from being stored on multiple payment records.
 
-- A share must belong to an existing bill and member in the same household.
-- A member number cannot be reused within a household.
-- A payment can only be recorded once for a share.
-- Payment amounts must match their corresponding share amounts.
-- Member names must be unique within a household, ignoring case and surrounding whitespace.
+The database also defines **`uq_members_home_normalized_name`**, a unique expression index on `home_id` and `lower(trim(name))`. It prevents duplicate member names within the same household after trimming surrounding whitespace and converting the comparison to lowercase.
+
+These definitions are in `api/migrations/0002_allow_zero_value_shares.sql` and `api/migrations/0003_unique_member_name_per_home.sql`.
 
 ## API endpoints
 
