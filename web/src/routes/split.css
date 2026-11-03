@@ -118,6 +118,16 @@
   padding: 36px 4% 64px;
 }
 
+.split-app .household-return-link {
+  margin: 14px 0;
+  text-align: center;
+}
+
+.split-app .household-return-link a {
+  color: var(--ink);
+  font-weight: 600;
+}
+
 .split-app .page-heading h1,
 .split-app .section-title-group h2,
 .split-app .selected-bill-heading h2,

@@ -189,11 +189,7 @@ This starts:
 
 The API applies local database migrations before starting.
 
-Open the web application and select a household. The Split Ledger page uses a household ID in the URL:
-
-```text
-http://localhost:5173/split?homeId=<HOUSEHOLD_ID>
-```
+Open [http://localhost:5173](http://localhost:5173) and select a household to open its Split Ledger. You can switch households from the selector in the ledger header.
 
 ### Other commands
 

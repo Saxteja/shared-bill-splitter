@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import BillList from '../components/bills/BillList'
 import EmptyState from '../components/common/EmptyState'
@@ -32,7 +32,16 @@ function SplitPage() {
   const { data, isLoading, error, reload } = useHomeData(homeId)
 
   if (!homeId) {
-    return <EmptyState message="Add ?homeId=... to the URL to view a household." />
+    return (
+      <main className="app-shell split-app">
+        <section className="page-content">
+          <EmptyState message="Choose a household to open its Split Ledger." />
+          <p className="household-return-link">
+            <Link to="/">Return to household selection</Link>
+          </p>
+        </section>
+      </main>
+    )
   }
 
   return (
@@ -41,7 +50,14 @@ function SplitPage() {
         <Header homeId={homeId} />
         <section className="page-content">
           {!data && isLoading && <LoadingState />}
-          {!data && error && <ErrorState message={error} onRetry={reload} />}
+          {!data && error && (
+            <>
+              <ErrorState message={error} onRetry={reload} />
+              <p className="household-return-link">
+                <Link to="/">Return to household selection</Link>
+              </p>
+            </>
+          )}
           {!data && !isLoading && !error && (
             <EmptyState message="No data available for this household." />
           )}
